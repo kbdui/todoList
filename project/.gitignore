@@ -1,0 +1,12 @@
+# Rust 编译输出
+/target/
+
+# Cargo.lock (对于库项目，通常忽略；对于二进制项目，通常保留)
+# Cargo.lock
+
+# 这些文件由 rustfmt 生成
+**/*.rs.bk
+
+# MSVC Windows 构建输出
+*.pdb
+
