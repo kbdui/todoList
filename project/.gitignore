@@ -10,3 +10,6 @@
 # MSVC Windows 构建输出
 *.pdb
 
+# 数据库文件（保留 database 文件夹本身）
+/database/*
+!/database/.gitkeep

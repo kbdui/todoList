@@ -1,2 +1,2 @@
 [database]
-path = "database/todo.db"
+path = "todo.db"
