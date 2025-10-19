@@ -1,2 +1,5 @@
 [database]
 path = "todo.db"
+
+[json]
+path = "config.json"
