@@ -25,13 +25,47 @@ pub fn order_check(order: &str) -> AnyResult<()> {
             help::print_help();
         }
         "insert" => {
-            todo_list_serv::add_todo(&db, &form)?;
+            todo_list_serv::create_new_todo(&db)?;
         }
         "delete" => {
+            println!("请输入要删除的任务ID:");
+            let mut id = String::new();
+            std::io::stdin().read_line(&mut id)?;
+            let id = id.trim().parse::<i32>()?;
             todo_list_serv::delete_todo(&db, id)?;
         }
         "update" => {
-            todo_list_serv::update_todo(&db, &form)?;
+            use crate::dao::todo_list_dao;
+            
+            println!("请输入要更新的任务ID:");
+            let mut id = String::new();
+            std::io::stdin().read_line(&mut id)?;
+            let id = id.trim().parse::<i32>()?;
+
+            // 获取现有的 todo
+            let conn = db.get_connection();
+            let mut todo = todo_list_dao::get_todo_by_id(conn, id)?
+                .ok_or_else(|| anyhow::anyhow!("未找到ID为 {} 的任务", id))?;
+
+            // 获取新的标题
+            println!("请输入新的任务标题 (当前: {}):", todo.title);
+            let mut title = String::new();
+            std::io::stdin().read_line(&mut title)?;
+            let title = title.trim();
+            if !title.is_empty() {
+                todo.title = title.to_string();
+            }
+
+            // 获取新的描述
+            println!("请输入新的任务描述 (留空跳过):");
+            let mut description = String::new();
+            std::io::stdin().read_line(&mut description)?;
+            let description = description.trim();
+            if !description.is_empty() {
+                todo.description = Some(description.to_string());
+            }
+
+            todo_list_serv::update_todo(&db, &todo)?;
         }
         _ => {
             println!("❌ 未知命令: '{}'", order);
@@ -44,12 +78,3 @@ pub fn order_check(order: &str) -> AnyResult<()> {
 }
 
 // 打印帮助信息
-fn print_help() {
-    println!("📋 可用命令列表:");
-    println!("  list  - 显示所有待办事项");
-    println!("  help  - 显示此帮助信息");
-    println!("  exit  - 退出程序");
-    println!("  insert - 添加待办事项");
-    println!("  delete - 删除待办事项");
-    println!("  update - 更新待办事项");
-}

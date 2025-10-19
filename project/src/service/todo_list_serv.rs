@@ -65,23 +65,41 @@ pub fn show_all_todos(database: &Database) -> AnyResult<()> {
     Ok(())
 }
 
-pub fn add_todo(database: &Database, form: &TodoListForm) -> AnyResult<()> {
-    let conn = database.get_connection();
-    todo_list_dao::insert_todo(conn, form)?;
-    println!("添加成功");
-    Ok(())
-}
 pub fn delete_todo(database: &Database, id: i32) -> AnyResult<()> {
-    let conn = database.get_connection();
-    todo_list_dao::delete_todo(conn, id)?;
-    println!("删除成功");
+    use std::io::{self, Write};
+    println!("🔴 即将删除ID为 {} 的待办事项，确定删除吗？(y/N)", id);
+    print!("请输入 y 确认，其他任意键取消: ");
+    io::stdout().flush()?;
+    let mut confirm = String::new();
+    io::stdin().read_line(&mut confirm)?;
+    let confirm = confirm.trim().to_lowercase();
+    if confirm == "y" {
+        let conn = database.get_connection();
+        todo_list_dao::delete_todo(conn, id)?;
+        println!("✅ 删除成功");
+    } else {
+        println!("❎ 取消删除");
+    }
     Ok(())
 }
-pub fn update_todo(database: &Database, form: &TodoListForm) -> AnyResult<()> {
-    let conn = database.get_connection();
-    todo_list_dao::update_todo(conn, form)?;
-    println!("更新成功");
 
+pub fn update_todo(database: &Database, form: &TodoListForm) -> AnyResult<()> {
+    use std::io::{self, Write};
+    println!("📝 即将更新ID为 {} 的待办事项，确定更新吗？(y/N)", form.id);
+    print!("请输入 y 确认，其他任意键取消: ");
+    io::stdout().flush()?;
+    let mut confirm = String::new();
+    io::stdin().read_line(&mut confirm)?;
+    let confirm = confirm.trim().to_lowercase();
+    if confirm == "y" {
+        let conn = database.get_connection();
+        todo_list_dao::update_todo(conn, form)?;
+        println!("✅ 更新成功");
+    } else {
+        println!("❎ 取消更新");
+    }
+    Ok(())
+}
 // 创建新的待办事项（交互式输入）
 pub fn create_new_todo(database: &Database) -> AnyResult<()> {
     println!("📝 创建新的待办事项");
