@@ -2,6 +2,7 @@ use crate::service::todo_list_serv;
 use crate::init::database;
 use crate::init::config_load;
 use anyhow::Result as AnyResult;
+use crate::service::help;
 
 // 命令解析与执行
 pub fn order_check(order: &str) -> AnyResult<()> {
@@ -17,8 +18,11 @@ pub fn order_check(order: &str) -> AnyResult<()> {
         "list" => {
             todo_list_serv::show_all_todos(&db)?;
         }
+        "new" => {
+            todo_list_serv::create_new_todo(&db)?;
+        }
         "help" => {
-            print_help();
+            help::print_help();
         }
         _ => {
             println!("❌ 未知命令: '{}'", order);
@@ -27,12 +31,4 @@ pub fn order_check(order: &str) -> AnyResult<()> {
     }
     
     Ok(())
-}
-
-// 打印帮助信息
-fn print_help() {
-    println!("📋 可用命令列表:");
-    println!("  list  - 显示所有待办事项");
-    println!("  help  - 显示此帮助信息");
-    println!("  exit  - 退出程序");
 }
