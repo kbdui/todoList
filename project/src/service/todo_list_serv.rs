@@ -21,3 +21,21 @@ pub fn show_all_todos(database: &Database) -> AnyResult<()> {
 
     Ok(())
 }
+pub fn add_todo(database: &Database, form: &TodoListForm) -> AnyResult<()> {
+    let conn = database.get_connection();
+    todo_list_dao::insert_todo(conn, form)?;
+    println!("添加成功");
+    Ok(())
+}
+pub fn delete_todo(database: &Database, id: i32) -> AnyResult<()> {
+    let conn = database.get_connection();
+    todo_list_dao::delete_todo(conn, id)?;
+    println!("删除成功");
+    Ok(())
+}
+pub fn update_todo(database: &Database, form: &TodoListForm) -> AnyResult<()> {
+    let conn = database.get_connection();
+    todo_list_dao::update_todo(conn, form)?;
+    println!("更新成功");
+    Ok(())
+}
