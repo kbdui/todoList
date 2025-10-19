@@ -1,0 +1,71 @@
+=====================================
+  Todo List - 使用说明
+=====================================
+
+【快速启动】
+
+Windows 用户：
+  双击 run.bat（开发环境）
+  或 start.bat（部署版本）
+
+Linux/macOS 用户：
+  在终端执行：./run.sh 或 ./start.sh
+  （首次使用需要：chmod +x *.sh）
+
+【文件说明】
+
+开发环境文件：
+  run.bat / run.sh     开发环境启动脚本，会自动找 target/release 或 target/debug 下的程序
+
+部署环境文件：
+  start.bat / start.sh 部署环境启动脚本，运行同目录的 project.exe
+  部署说明.md          详细的部署和打包指南
+
+配置文件：
+  config.toml          程序配置文件
+  database/            数据库存储目录
+
+【重要】
+
+⚠ 必须使用启动脚本运行程序！
+⚠ 不要直接双击 project.exe 或从其他目录运行！
+
+原因：程序需要从当前目录读取 config.toml 文件
+
+【命令列表】
+
+启动程序后可使用以下命令：
+  help  - 显示帮助信息
+  list  - 显示所有待办事项
+  exit  - 退出程序
+
+【目录结构】
+
+项目目录/
+├── run.bat          开发环境启动（Windows）
+├── run.sh           开发环境启动（Linux/macOS）
+├── start.bat        部署环境启动（Windows）
+├── start.sh         部署环境启动（Linux/macOS）
+├── config.toml      配置文件
+├── database/        数据库目录
+│   └── todo.db      数据库文件（首次运行自动创建）
+├── target/          编译输出目录
+│   ├── debug/       Debug 版本
+│   └── release/     Release 版本
+└── 部署说明.md      详细部署指南
+
+【常见问题】
+
+Q: 提示 "Failed to find config.toml"
+A: 没有使用启动脚本，请使用 run.bat 或 start.bat
+
+Q: 脚本窗口一闪而过
+A: 在命令行/终端中手动运行脚本查看错误信息
+
+Q: 找不到可执行文件
+A: 开发环境需先编译：cargo build --release
+
+【更多信息】
+
+详细部署说明请查看：部署说明.md
+
