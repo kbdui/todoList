@@ -2,18 +2,13 @@ use crate::service::todo_list_serv;
 use crate::service::note_serv;
 use crate::init::database;
 use anyhow::Result as AnyResult;
-
-use crate::service::help;
 use crate::data::note::NoteForm;
 use chrono::Utc;
 
 // 命令定义结构
-// pub struct CommandInfo {
-//     pub name: &'static str,
-//     pub description: &'static str,
-// }
-pub  struct CommandInfo {
+pub struct CommandInfo {
     pub name: &'static str,
+    #[allow(dead_code)]
     pub description: &'static str,
 }
 // 所有可用命令列表
@@ -23,9 +18,10 @@ pub const AVAILABLE_COMMANDS: &[CommandInfo] = &[
     CommandInfo { name: "insert", description: "添加待办事项（同new）" },
     CommandInfo { name: "delete", description: "删除待办事项" },
     CommandInfo { name: "update", description: "更新待办事项" },
+    CommandInfo { name: "toggle", description: "切换待办事项完成状态" },
+    CommandInfo { name: "note", description: "管理待办事项的笔记" },
     CommandInfo { name: "help", description: "显示帮助信息" },
     CommandInfo { name: "exit", description: "退出程序" },
-    CommandInfo { name: "note", description: "管理待办事项的笔记" },
 ];
 
 // Memo 模式专用命令解析与执行
@@ -80,6 +76,13 @@ pub fn order_check(order: &str, db: &database::Database) -> AnyResult<()> {
             }
 
             todo_list_serv::update_todo(&db, &todo)?;
+        }
+        "toggle" => {
+            println!("请输入要切换完成状态的待办事项ID:");
+            let mut id = String::new();
+            std::io::stdin().read_line(&mut id)?;
+            let id = id.trim().parse::<i32>()?;
+            todo_list_serv::toggle_completed(&db, id)?;
         }
         "note" => {
             handle_note_command(&db)?;

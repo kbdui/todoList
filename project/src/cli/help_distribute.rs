@@ -3,6 +3,7 @@ use crate::service::switch;
 use crate::init::database;
 use crate::init::db_json;
 use crate::cli::todo_list_cli;
+use crate::cli::review_cli;
 use anyhow::Result as AnyResult;
 
 /// 命令分发中心
@@ -38,12 +39,13 @@ pub fn distribute_command(
             // memo 模式：分发给 todo_list_cli 处理
             todo_list_cli::order_check(command, db)?;
         }
+        "review" => {
+            // review 模式：分发给 review_cli 处理
+            review_cli::order_check(command, db)?;
+        }
         // 未来可以添加更多模式
         // "calendar" => {
         //     calendar_cli::order_check(command, db)?;
-        // }
-        // "note" => {
-        //     note_cli::order_check(command, db)?;
         // }
         _ => {
             println!("❌ 未知模式: '{}'", mode);
@@ -55,6 +57,7 @@ pub fn distribute_command(
 }
 
 /// 获取当前模式名称（用于显示）
+#[allow(dead_code)]
 pub fn get_current_mode_name(json_config: &db_json::JsonConfig) -> AnyResult<String> {
     json_config.get("mode")
 }

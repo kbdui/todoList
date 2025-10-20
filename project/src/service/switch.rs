@@ -3,7 +3,7 @@ use anyhow::Result as AnyResult;
 use std::io::{self, Write};
 
 /// 所有可用的模式
-const AVAILABLE_MODES: &[&str] = &["memo"];
+const AVAILABLE_MODES: &[&str] = &["memo", "review"];
 
 /// 切换应用模式
 pub fn switch_mode(json_config: &db_json::JsonConfig) -> AnyResult<()> {
@@ -69,16 +69,19 @@ pub fn switch_mode(json_config: &db_json::JsonConfig) -> AnyResult<()> {
 }
 
 /// 获取当前模式
+#[allow(dead_code)]
 pub fn get_current_mode(json_config: &db_json::JsonConfig) -> AnyResult<String> {
     json_config.get("mode")
 }
 
 /// 检查模式是否有效
+#[allow(dead_code)]
 pub fn is_valid_mode(mode: &str) -> bool {
     AVAILABLE_MODES.contains(&mode)
 }
 
 /// 获取所有可用模式
+#[allow(dead_code)]
 pub fn get_available_modes() -> &'static [&'static str] {
     AVAILABLE_MODES
 }

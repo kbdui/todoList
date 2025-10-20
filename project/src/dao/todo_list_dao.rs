@@ -135,3 +135,32 @@ pub fn delete_todo(conn: &Connection, id: i32) -> AnyResult<usize> {
     Ok(rows as usize)
 }
 
+// 标记待办事项为完成
+#[allow(dead_code)]
+pub fn mark_as_completed(conn: &Connection, id: i32) -> AnyResult<usize> {
+    let rows = conn.execute(
+        "UPDATE todo_list SET completed = 1 WHERE id = ?1",
+        params![id]
+    )?;
+    Ok(rows as usize)
+}
+
+// 标记待办事项为未完成
+#[allow(dead_code)]
+pub fn mark_as_pending(conn: &Connection, id: i32) -> AnyResult<usize> {
+    let rows = conn.execute(
+        "UPDATE todo_list SET completed = 0 WHERE id = ?1",
+        params![id]
+    )?;
+    Ok(rows as usize)
+}
+
+// 切换待办事项的完成状态
+pub fn toggle_completed(conn: &Connection, id: i32) -> AnyResult<usize> {
+    let rows = conn.execute(
+        "UPDATE todo_list SET completed = 1 - completed WHERE id = ?1",
+        params![id]
+    )?;
+    Ok(rows as usize)
+}
+

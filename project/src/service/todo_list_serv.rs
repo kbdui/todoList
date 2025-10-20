@@ -1,9 +1,30 @@
 use anyhow::Result as AnyResult;
 use crate::dao::todo_list_dao;
+use crate::dao::note_dao;
 use crate::init::database::Database;
 use crate::data::todo_list::TodoListForm;
 use chrono::{Utc, NaiveDateTime, TimeZone, DateTime};
 use std::io::{self, Write};
+
+/// 解析优先级字符串为数字（用于排序）
+/// 高优先级返回较小的数字，这样排序时会排在前面
+fn parse_priority(priority: &Option<String>) -> i32 {
+    match priority {
+        None => 999, // 无优先级排在最后
+        Some(p) => {
+            let p_lower = p.to_lowercase();
+            match p_lower.as_str() {
+                "高" | "high" | "1" | "urgent" | "紧急" => 1,
+                "中" | "medium" | "2" | "normal" | "普通" => 2,
+                "低" | "low" | "3" | "minor" | "次要" => 3,
+                _ => {
+                    // 尝试解析为数字
+                    p.parse::<i32>().unwrap_or(999)
+                }
+            }
+        }
+    }
+}
 
 // 解析时间字符串，支持多种格式
 // 支持：YYYY-MM-DD HH:MM:SS, YYYY-MM-DD HH:MM, YYYY-MM-DD HH, YYYY-MM-DD
@@ -37,10 +58,11 @@ pub fn show_all_todos(database: &Database) -> AnyResult<()> {
         println!("暂无代办事项");
     } else {
         println!("📋 所有待办事项:");
-        println!("{:-<80}", "");
+        println!("{:=<80}", "");
         for (index, todo) in todos.iter().enumerate() {
             let status = if todo.completed { "✅" } else { "⬜" };
-            println!("{}. {} [ID: {}] {}", index + 1, status, todo.id, todo.title);
+            let status_text = if todo.completed { "已完成" } else { "未完成" };
+            println!("{}. {} [ID: {}] {} ({})", index + 1, status, todo.id, todo.title, status_text);
             if let Some(desc) = &todo.description {
                 println!("   描述: {}", desc);
             }
@@ -58,7 +80,33 @@ pub fn show_all_todos(database: &Database) -> AnyResult<()> {
             if let Some(key3) = &todo.key_message3 {
                 println!("   关键信息3: {}", key3);
             }
-            println!("{:-<80}", "");
+            
+            // 显示该 todo 的所有笔记
+            let mut notes = note_dao::list_notes_by_todo_id(conn, todo.id)?;
+            if !notes.is_empty() {
+                // 按优先级排序
+                notes.sort_by(|a, b| {
+                    parse_priority(&a.note_priority).cmp(&parse_priority(&b.note_priority))
+                });
+                
+                println!("\n   📝 笔记 ({} 条):", notes.len());
+                for (note_idx, note) in notes.iter().enumerate() {
+                    println!("      {}. [笔记ID: {}] {}", note_idx + 1, note.id, note.note_title);
+                    println!("         内容: {}", note.note_content);
+                    println!("         时间: {}", note.note_time.format("%Y-%m-%d %H:%M:%S"));
+                    if let Some(ref priority) = note.note_priority {
+                        println!("         优先级: {}", priority);
+                    }
+                    if let Some(ref tag) = note.note_tag {
+                        println!("         标签: {}", tag);
+                    }
+                    if note_idx < notes.len() - 1 {
+                        println!("         {}", "·".repeat(40));
+                    }
+                }
+            }
+            
+            println!("{:=<80}", "");
         }
     }
 
@@ -98,6 +146,125 @@ pub fn update_todo(database: &Database, form: &TodoListForm) -> AnyResult<()> {
     } else {
         println!("❎ 取消更新");
     }
+    Ok(())
+}
+
+/// 显示已完成的待办事项
+#[allow(dead_code)]
+pub fn show_completed_todos(database: &Database) -> AnyResult<()> {
+    let conn = database.get_connection();
+    let todos = todo_list_dao::list_todos(conn)?;
+
+    let completed_todos: Vec<_> = todos.iter().filter(|t| t.completed).collect();
+
+    if completed_todos.is_empty() {
+        println!("✅ 暂无已完成的待办事项");
+        return Ok(());
+    }
+
+    println!("\n✅ 已完成的待办事项 ({} 项):", completed_todos.len());
+    println!("{:=<80}", "");
+    
+    for (index, todo) in completed_todos.iter().enumerate() {
+        println!("{}. [ID: {}] {}", index + 1, todo.id, todo.title);
+        if let Some(desc) = &todo.description {
+            println!("   描述: {}", desc);
+        }
+        println!("   开始时间: {}", todo.begin_time.format("%Y-%m-%d %H:%M:%S"));
+        if let Some(end_time) = &todo.end_time {
+            println!("   结束时间: {}", end_time.format("%Y-%m-%d %H:%M:%S"));
+        }
+        
+        // 显示笔记数量
+        let notes = note_dao::list_notes_by_todo_id(conn, todo.id)?;
+        if !notes.is_empty() {
+            println!("   📝 笔记数: {}", notes.len());
+        }
+        
+        println!("{:-<80}", "");
+    }
+
+    Ok(())
+}
+
+/// 显示未完成的待办事项
+#[allow(dead_code)]
+pub fn show_pending_todos(database: &Database) -> AnyResult<()> {
+    let conn = database.get_connection();
+    let todos = todo_list_dao::list_todos(conn)?;
+
+    let pending_todos: Vec<_> = todos.iter().filter(|t| !t.completed).collect();
+
+    if pending_todos.is_empty() {
+        println!("⬜ 暂无未完成的待办事项");
+        return Ok(());
+    }
+
+    let now = Utc::now();
+    println!("\n⬜ 未完成的待办事项 ({} 项):", pending_todos.len());
+    println!("{:=<80}", "");
+    
+    for (index, todo) in pending_todos.iter().enumerate() {
+        println!("{}. [ID: {}] {}", index + 1, todo.id, todo.title);
+        if let Some(desc) = &todo.description {
+            println!("   描述: {}", desc);
+        }
+        println!("   开始时间: {}", todo.begin_time.format("%Y-%m-%d %H:%M:%S"));
+        
+        // 计算已经过去的时间
+        let elapsed = now.signed_duration_since(todo.begin_time);
+        let days = elapsed.num_days();
+        
+        if days > 0 {
+            println!("   已过去: {} 天", days);
+        } else {
+            let hours = elapsed.num_hours();
+            if hours > 0 {
+                println!("   已过去: {} 小时", hours);
+            } else {
+                println!("   已过去: {} 分钟", elapsed.num_minutes());
+            }
+        }
+        
+        if let Some(end_time) = &todo.end_time {
+            // 检查是否超期
+            if now > *end_time {
+                let overdue = now.signed_duration_since(*end_time);
+                let overdue_days = overdue.num_days();
+                println!("   ⚠️  已超期 {} 天", overdue_days);
+            } else {
+                println!("   截止时间: {}", end_time.format("%Y-%m-%d %H:%M:%S"));
+            }
+        }
+        
+        // 显示笔记数量
+        let notes = note_dao::list_notes_by_todo_id(conn, todo.id)?;
+        if !notes.is_empty() {
+            println!("   📝 笔记数: {}", notes.len());
+        }
+        
+        println!("{:-<80}", "");
+    }
+
+    Ok(())
+}
+
+/// 切换待办事项的完成状态
+pub fn toggle_completed(database: &Database, id: i32) -> AnyResult<()> {
+    let conn = database.get_connection();
+    
+    // 先检查待办事项是否存在
+    let todo = todo_list_dao::get_todo_by_id(conn, id)?
+        .ok_or_else(|| anyhow::anyhow!("未找到ID为 {} 的待办事项", id))?;
+    
+    todo_list_dao::toggle_completed(conn, id)?;
+    
+    if todo.completed {
+        println!("⬜ 已将待办事项 '{}' 标记为未完成", todo.title);
+    } else {
+        println!("✅ 已将待办事项 '{}' 标记为完成", todo.title);
+    }
+    
     Ok(())
 }
 // 创建新的待办事项（交互式输入）

@@ -3,14 +3,39 @@ use crate::data::note::NoteForm;
 use crate::dao::note_dao;
 use crate::init::database::Database;
 
+/// 解析优先级字符串为数字（用于排序）
+/// 高优先级返回较小的数字，这样排序时会排在前面
+fn parse_priority(priority: &Option<String>) -> i32 {
+    match priority {
+        None => 999, // 无优先级排在最后
+        Some(p) => {
+            let p_lower = p.to_lowercase();
+            match p_lower.as_str() {
+                "高" | "high" | "1" | "urgent" | "紧急" => 1,
+                "中" | "medium" | "2" | "normal" | "普通" => 2,
+                "低" | "low" | "3" | "minor" | "次要" => 3,
+                _ => {
+                    // 尝试解析为数字
+                    p.parse::<i32>().unwrap_or(999)
+                }
+            }
+        }
+    }
+}
+
 /// 显示某个 todo 项目的所有笔记
 pub fn show_notes_for_todo(database: &Database, todo_id: i32) -> AnyResult<()> {
     let conn = database.get_connection();
-    let notes = note_dao::list_notes_by_todo_id(conn, todo_id)?;
+    let mut notes = note_dao::list_notes_by_todo_id(conn, todo_id)?;
 
     if notes.is_empty() {
         println!("📝 该待办事项暂无笔记");
     } else {
+        // 按优先级排序
+        notes.sort_by(|a, b| {
+            parse_priority(&a.note_priority).cmp(&parse_priority(&b.note_priority))
+        });
+        
         println!("\n📝 笔记列表 (待办事项ID: {}):", todo_id);
         println!("{}", "=".repeat(80));
         for note in &notes {

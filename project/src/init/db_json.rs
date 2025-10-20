@@ -109,6 +109,7 @@ impl JsonConfig {
     
     /// 获取指定字段的原始JSON值
     /// field_name: 要获取的字段名
+    #[allow(dead_code)]
     pub fn get_value(&self, field_name: &str) -> AnyResult<Value> {
         let data = self.read_json()?;
         
@@ -126,6 +127,7 @@ impl JsonConfig {
     /// 设置指定字段的JSON值
     /// field_name: 要设置的字段名
     /// value: 要设置的JSON值
+    #[allow(dead_code)]
     pub fn set_value(&self, field_name: &str, value: Value) -> AnyResult<()> {
         let mut data = self.read_json()?;
         
