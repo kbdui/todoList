@@ -2,8 +2,8 @@
 # Todo List 启动脚本 (Linux/macOS)
 # 此脚本确保程序从正确的目录启动
 
-# 切换到脚本所在目录
-cd "$(dirname "$0")" || exit 1
+# 切换到项目根目录（脚本的上级目录）
+cd "$(dirname "$0")/.." || exit 1
 
 # 检查可执行文件是否存在
 if [ -f "target/release/project" ]; then
@@ -27,4 +27,3 @@ if [ $exit_code -ne 0 ]; then
 fi
 
 exit $exit_code
-

@@ -4,6 +4,7 @@ use crate::init::database;
 use crate::init::db_json;
 use crate::cli::todo_list_cli;
 use crate::cli::review_cli;
+use crate::cli::reminder_cli;
 use anyhow::Result as AnyResult;
 
 /// 命令分发中心
@@ -42,6 +43,10 @@ pub fn distribute_command(
         "review" => {
             // review 模式：分发给 review_cli 处理
             review_cli::order_check(command, db)?;
+        }
+        "reminder" => {
+            // reminder 模式：分发给 reminder_cli 处理
+            reminder_cli::order_check(command, db, json_config)?;
         }
         // 未来可以添加更多模式
         // "calendar" => {

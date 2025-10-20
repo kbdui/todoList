@@ -2,20 +2,20 @@ use crate::service::review_serv;
 use crate::init::database;
 use anyhow::Result as AnyResult;
 
-// Review 模式专用命令列表
-pub struct CommandInfo {
-    pub name: &'static str,
-    #[allow(dead_code)]
-    pub description: &'static str,
-}
+// // Review 模式专用命令列表
+// pub struct CommandInfo {
+//     pub name: &'static str,
+//     #[allow(dead_code)]
+//     pub description: &'static str,
+// }
 
-// 所有可用命令列表
-pub const AVAILABLE_COMMANDS: &[CommandInfo] = &[
-    CommandInfo { name: "stats", description: "显示整体统计信息" },
-    CommandInfo { name: "completed", description: "显示已完成的待办事项" },
-    CommandInfo { name: "pending", description: "显示未完成的待办事项" },
-    CommandInfo { name: "notes", description: "显示最近的笔记" },
-];
+// // 所有可用命令列表
+// pub const AVAILABLE_COMMANDS: &[CommandInfo] = &[
+//     CommandInfo { name: "stats", description: "显示整体统计信息" },
+//     CommandInfo { name: "completed", description: "显示已完成的待办事项" },
+//     CommandInfo { name: "pending", description: "显示未完成的待办事项" },
+//     CommandInfo { name: "notes", description: "显示最近的笔记" },
+// ];
 
 /// Review 模式命令解析与执行
 pub fn order_check(order: &str, db: &database::Database) -> AnyResult<()> {
@@ -36,12 +36,12 @@ pub fn order_check(order: &str, db: &database::Database) -> AnyResult<()> {
         _ => {
             println!("❌ 未知命令: '{}'", order);
             println!("💡 输入 'help' 查看可用命令");
-            println!("\n可用命令: {}", 
-                AVAILABLE_COMMANDS.iter()
-                    .map(|c| c.name)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
+            // println!("\n可用命令: {}", 
+            //     AVAILABLE_COMMANDS.iter()
+            //         .map(|c| c.name)
+            //         .collect::<Vec<_>>()
+            //         .join(", ")
+            // );
         }
     }
     

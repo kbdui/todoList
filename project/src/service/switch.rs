@@ -3,7 +3,7 @@ use anyhow::Result as AnyResult;
 use std::io::{self, Write};
 
 /// 所有可用的模式
-const AVAILABLE_MODES: &[&str] = &["memo", "review"];
+const AVAILABLE_MODES: &[&str] = &["memo", "review", "reminder"];
 
 /// 切换应用模式
 pub fn switch_mode(json_config: &db_json::JsonConfig) -> AnyResult<()> {

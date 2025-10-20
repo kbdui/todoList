@@ -1,8 +1,8 @@
 #!/bin/bash
 # Todo List - 生产环境启动脚本 (Linux/macOS)
 
-# 切换到脚本所在目录
-cd "$(dirname "$0")" || exit 1
+# 切换到项目根目录（脚本的上级目录）
+cd "$(dirname "$0")/.." || exit 1
 
 # 启动程序
 ./project
@@ -16,4 +16,3 @@ if [ $exit_code -ne 0 ]; then
 fi
 
 exit $exit_code
-

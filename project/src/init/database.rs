@@ -18,6 +18,7 @@ impl Database {
     pub fn initialize_tables(&self) -> AnyResult<()> {
         self.create_todo_list_table()?;
         self.create_notes_table()?;
+        self.create_reminder_history_table()?;
         Ok(())
     }
 
@@ -59,6 +60,22 @@ impl Database {
             note_status TEXT,
             note_tag TEXT,
             note_priority TEXT,
+            FOREIGN KEY (todo_id) REFERENCES todo_list(id) ON DELETE CASCADE
+        )
+        "#;
+        self.conn.execute(sql, [])?;
+        Ok(())
+    }
+    
+    // 创建提醒历史表
+    pub fn create_reminder_history_table(&self) -> AnyResult<()> {
+        let sql = r#"
+        CREATE TABLE IF NOT EXISTS reminder_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            todo_id INTEGER NOT NULL,
+            reminder_time TEXT NOT NULL,
+            reminder_type TEXT NOT NULL,
+            notified INTEGER NOT NULL DEFAULT 1,
             FOREIGN KEY (todo_id) REFERENCES todo_list(id) ON DELETE CASCADE
         )
         "#;

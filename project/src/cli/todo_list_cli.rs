@@ -5,24 +5,24 @@ use anyhow::Result as AnyResult;
 use crate::data::note::NoteForm;
 use chrono::Utc;
 
-// 命令定义结构
-pub struct CommandInfo {
-    pub name: &'static str,
-    #[allow(dead_code)]
-    pub description: &'static str,
-}
-// 所有可用命令列表
-pub const AVAILABLE_COMMANDS: &[CommandInfo] = &[
-    CommandInfo { name: "list", description: "显示所有待办事项" },
-    CommandInfo { name: "new", description: "创建新的待办事项" },
-    CommandInfo { name: "insert", description: "添加待办事项（同new）" },
-    CommandInfo { name: "delete", description: "删除待办事项" },
-    CommandInfo { name: "update", description: "更新待办事项" },
-    CommandInfo { name: "toggle", description: "切换待办事项完成状态" },
-    CommandInfo { name: "note", description: "管理待办事项的笔记" },
-    CommandInfo { name: "help", description: "显示帮助信息" },
-    CommandInfo { name: "exit", description: "退出程序" },
-];
+// // 命令定义结构
+// pub struct CommandInfo {
+//     pub name: &'static str,
+//     #[allow(dead_code)]
+//     pub description: &'static str,
+// }
+// // 所有可用命令列表
+// pub const AVAILABLE_COMMANDS: &[CommandInfo] = &[
+//     CommandInfo { name: "list", description: "显示所有待办事项" },
+//     CommandInfo { name: "new", description: "创建新的待办事项" },
+//     CommandInfo { name: "insert", description: "添加待办事项（同new）" },
+//     CommandInfo { name: "delete", description: "删除待办事项" },
+//     CommandInfo { name: "update", description: "更新待办事项" },
+//     CommandInfo { name: "toggle", description: "切换待办事项完成状态" },
+//     CommandInfo { name: "note", description: "管理待办事项的笔记" },
+//     CommandInfo { name: "help", description: "显示帮助信息" },
+//     CommandInfo { name: "exit", description: "退出程序" },
+// ];
 
 // Memo 模式专用命令解析与执行
 pub fn order_check(order: &str, db: &database::Database) -> AnyResult<()> {
@@ -90,12 +90,12 @@ pub fn order_check(order: &str, db: &database::Database) -> AnyResult<()> {
         _ => {
             println!("❌ 未知命令: '{}'", order);
             println!("💡 输入 'help' 查看可用命令");
-            println!("\n可用命令: {}", 
-                AVAILABLE_COMMANDS.iter()
-                    .map(|c| c.name)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
+            // println!("\n可用命令: {}", 
+            //     AVAILABLE_COMMANDS.iter()
+            //         .map(|c| c.name)
+            //         .collect::<Vec<_>>()
+            //         .join(", ")
+            // );
         }
     }
     

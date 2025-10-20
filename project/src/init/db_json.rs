@@ -11,6 +11,7 @@ pub struct JsonConfig {
 impl JsonConfig {
     /// 创建或打开JSON文件
     /// json_path: JSON文件的完整路径
+    /// 当前，若修改了config的结构，需删除config文件以便触发重新生成
     pub fn new(json_path: &str) -> AnyResult<Self> {
         // 如果文件不存在，创建默认的JSON文件
         if !std::path::Path::new(json_path).exists() {
