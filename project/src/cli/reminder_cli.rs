@@ -1,5 +1,6 @@
 use crate::init::database::Database;
 use crate::init::db_json::JsonConfig;
+use crate::init::config_reset;
 use crate::service::reminder_serv;
 use anyhow::Result as AnyResult;
 use std::io::{self, Write};
@@ -174,6 +175,10 @@ fn toggle_reminder(json_config: &JsonConfig) -> AnyResult<()> {
             
             // 更新配置（保持启用状态）
             update_reminder_config(json_config, current_enabled, new_interval)?;
+            
+            // 标记配置已改变，提示需要更新任务
+            config_reset::mark_reminder_config_changed(json_config)?;
+            
             println!();
             println!("✅ 检查间隔已更新为: 每 {} 分钟", new_interval);
             println!();

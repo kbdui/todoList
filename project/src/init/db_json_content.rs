@@ -13,7 +13,13 @@ pub struct ReminderConfig {
     pub enabled: bool,
     pub check_interval_minutes: u32,
     pub notification_type: String,
+    #[serde(default = "default_is_changed")]
+    pub is_changed: bool,
     pub rules: Vec<ReminderRule>,
+}
+
+fn default_is_changed() -> bool {
+    true
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -29,6 +35,7 @@ impl Default for ReminderConfig {
             enabled: true,
             check_interval_minutes: 15,
             notification_type: "both".to_string(),
+            is_changed: true,
             rules: vec![
                 ReminderRule {
                     rule_type: "before_start".to_string(),

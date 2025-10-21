@@ -1,3 +1,7 @@
+// Release 模式下编译为 Windows GUI 程序（无控制台窗口）
+// Debug 模式下保持为控制台程序（方便开发调试）
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod data;
 mod dao;
 mod cli;
@@ -7,31 +11,9 @@ mod runner;
 
 use std::io::{self, Write};
 use std::env;
-use std::thread;
-use std::time::Duration;
 use cli::help_distribute;
 use init::{database, db_json, config_load};
 use anyhow::Result as AnyResult;
-
-/// Windows 平台：隐藏控制台窗口
-#[cfg(windows)]
-fn hide_console_window() {
-    use winapi::um::wincon::GetConsoleWindow;
-    use winapi::um::winuser::{ShowWindow, SW_HIDE};
-    
-    unsafe {
-        let window = GetConsoleWindow();
-        if !window.is_null() {
-            ShowWindow(window, SW_HIDE);
-        }
-    }
-}
-
-/// 非 Windows 平台：空实现
-#[cfg(not(windows))]
-fn hide_console_window() {
-    // 非 Windows 平台不需要隐藏控制台
-}
 
 fn main() -> AnyResult<()> {
     // 获取命令行参数
@@ -39,14 +21,11 @@ fn main() -> AnyResult<()> {
     
     // 检查是否是提醒检查模式（由系统定时任务调用）
     if args.len() > 1 && args[1] == "--check-reminders" {
-        // 后台模式：隐藏控制台窗口
-        hide_console_window();
-        // 延迟3秒确保窗口完全隐藏
-        thread::sleep(Duration::from_secs(3));
+        // 后台模式：直接执行提醒检查
         return runner::reminder::run_check_mode();
     }
     
-    // 正常的交互式模式（保持控制台显示）
+    // 正常的交互式模式
     run_interactive_mode()
 }
 
@@ -62,6 +41,9 @@ fn run_interactive_mode() -> AnyResult<()> {
     // 获取JSON配置文件路径并初始化
     let json_path = config_load::get_config_value("json", Some("path"));
     let json_config = db_json::JsonConfig::new(&json_path)?;
+    
+    // 重置提醒配置的 is_changed 标记（标记配置已同步）
+    init::config_reset::reset_reminder_changed_flag(&json_config)?;
     
     // 启动时检查一次提醒（可选功能）
     // runner::reminder::check_on_startup(&db, &json_config)?;

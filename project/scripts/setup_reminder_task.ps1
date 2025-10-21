@@ -85,11 +85,10 @@ switch ($choice) {
 
 Write-Host "✓ 已设置为每 $intervalMinutes 分钟执行一次" -ForegroundColor Green
 
-# 创建任务操作 - 使用 PowerShell 隐藏窗口运行
-$psCommand = "Set-Location '$projectPath'; & '$exePath' --check-reminders"
+# 创建任务操作 - Release 版本是 GUI 程序，可以直接运行，不会显示控制台
 $action = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -NoProfile -Command `"$psCommand`"" `
+    -Execute $exePath `
+    -Argument "--check-reminders" `
     -WorkingDirectory $projectPath
 
 # 创建触发器（每N分钟执行一次）

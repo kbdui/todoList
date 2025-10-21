@@ -1,12 +1,10 @@
 @echo off
 chcp 65001 >nul
-REM Todo List 启动脚本 (Windows)
-REM 此脚本确保程序从正确的目录启动
+REM Todo List 启动脚本
 
-REM 切换到项目根目录（脚本的上级目录）
 cd /d "%~dp0\.."
 
-REM 检查JSON配置中提醒功能是否启用
+REM 检查提醒功能是否启用
 for /f "tokens=*" %%a in ('powershell -Command "$json = Get-Content 'database\config.json' -Raw -Encoding UTF8 | ConvertFrom-Json; if ($json.reminder.enabled -eq $true) { Write-Output 'TRUE' } else { Write-Output 'FALSE' }" 2^>nul') do set CHECK_RESULT=%%a
 if "%CHECK_RESULT%"=="TRUE" (set REMINDER_ENABLED=0) else (set REMINDER_ENABLED=1)
 
@@ -14,88 +12,66 @@ REM 检查提醒任务是否已设置
 powershell -Command "Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue" >nul 2>&1
 set TASK_EXISTS=%errorlevel%
 
-REM 如果任务存在，检查任务路径和间隔是否与当前配置匹配
-if %TASK_EXISTS% equ 0 (
-    REM 检查路径是否匹配
-    powershell -Command "$task = Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue; $action = $task.Actions[0]; $scriptDir = Split-Path -Parent '%~f0'; $projectPath = Split-Path -Parent $scriptDir; $currentExePath = Join-Path $projectPath 'target\release\project.exe'; if (-Not (Test-Path $currentExePath)) { $currentExePath = Join-Path $projectPath 'target\debug\project.exe' }; if ($action.Execute -notlike '*project.exe*') { exit 1 } else { exit 0 }" >nul 2>&1
-    if %errorlevel% neq 0 (
-        REM 任务路径不匹配，需要重建
-        echo.
-        echo 检测到项目路径已改变，正在更新定时任务...
-        
-        powershell -Command "Unregister-ScheduledTask -TaskName 'TodoListReminder' -Confirm:$false -ErrorAction SilentlyContinue" >nul 2>&1
-        set TASK_EXISTS=1
-        echo 旧任务已删除，将重新创建
-        echo.
+REM 如果任务存在且提醒已启用，检查配置是否改变
+set NEED_REBUILD=0
+if %TASK_EXISTS% equ 0 if %REMINDER_ENABLED% equ 0 (
+    powershell -ExecutionPolicy Bypass -File "%~dp0check_config_changed.ps1"
+    if errorlevel 1 set NEED_REBUILD=1
+)
+
+REM 如果需要重建任务
+if %NEED_REBUILD% equ 1 (
+    echo.
+    echo 检测到提醒配置已改变，正在更新定时任务...
+    powershell -Command "Unregister-ScheduledTask -TaskName 'TodoListReminder' -Confirm:$false -ErrorAction SilentlyContinue" >nul 2>&1
+    set TASK_EXISTS=1
+    echo 旧任务已删除，将重新创建
+    echo.
+)
+
+REM 处理提醒功能已启用的情况
+if %REMINDER_ENABLED% equ 0 if %TASK_EXISTS% neq 0 (
+    echo.
+    echo 检测到提醒功能已启用，但未设置定时任务
+    echo 正在自动设置定时任务...
+    echo.
+    powershell -ExecutionPolicy Bypass -File "%~dp0create_task.ps1"
+    if errorlevel 1 (
+        echo 自动设置失败，您可以稍后手动设置
     ) else (
-        REM 路径匹配，继续检查间隔是否匹配
-        powershell -Command "$json = Get-Content 'database\config.json' -Raw -Encoding UTF8 | ConvertFrom-Json; $configInterval = $json.reminder.check_interval_minutes; $task = Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue; $trigger = $task.Triggers[0]; $taskInterval = $trigger.Repetition.Interval; if ($taskInterval -match 'PT(\d+)M$') { $taskMinutes = [int]$matches[1] } elseif ($taskInterval -match 'PT(\d+)H$') { $taskMinutes = [int]$matches[1] * 60 } elseif ($taskInterval -match 'PT(\d+)H(\d+)M') { $taskMinutes = [int]$matches[1] * 60 + [int]$matches[2] } else { exit 0 }; if ($configInterval -ne $taskMinutes) { exit 1 } else { exit 0 }" >nul 2>&1
-        if %errorlevel% neq 0 (
-            REM 间隔不匹配，需要重建
-            echo.
-            echo 检测到检查间隔已改变，正在更新定时任务...
-            
-            powershell -Command "Unregister-ScheduledTask -TaskName 'TodoListReminder' -Confirm:$false -ErrorAction SilentlyContinue" >nul 2>&1
-            set TASK_EXISTS=1
-            echo 旧任务已删除，将重新创建
-            echo.
-        )
+        echo 提醒功能已启用
     )
+    echo.
 )
 
-REM 根据配置和任务状态进行处理
-if %REMINDER_ENABLED% equ 0 (
-    REM 提醒功能已启用
-    if %TASK_EXISTS% neq 0 (
-        REM 任务不存在或路径不匹配，创建任务
-        echo.
-        echo 检测到提醒功能已启用，但未设置定时任务
-        echo 正在自动设置定时任务...
-        echo.
-        
-        powershell -ExecutionPolicy Bypass -File "%~dp0create_task.ps1"
-        
-        if %errorlevel% equ 0 (
-            echo 提醒功能已启用
-        ) else (
-            echo 自动设置失败，您可以稍后手动设置
-        )
-        echo.
+REM 处理提醒功能已禁用的情况
+if %REMINDER_ENABLED% neq 0 if %TASK_EXISTS% equ 0 (
+    echo.
+    echo 检测到提醒功能已禁用，正在删除定时任务...
+    powershell -Command "Unregister-ScheduledTask -TaskName 'TodoListReminder' -Confirm:$false -ErrorAction Stop" >nul 2>&1
+    if errorlevel 1 (
+        echo 删除任务失败，您可以手动在任务计划程序中删除
+    ) else (
+        echo 定时任务已删除
     )
-) else (
-    REM 提醒功能已禁用
-    if %TASK_EXISTS% equ 0 (
-        REM 任务存在，删除任务
-        echo.
-        echo 检测到提醒功能已禁用，正在删除定时任务...
-        
-        powershell -Command "Unregister-ScheduledTask -TaskName 'TodoListReminder' -Confirm:$false -ErrorAction Stop" >nul 2>&1
-        
-        if %errorlevel% equ 0 (
-            echo 定时任务已删除
-        ) else (
-            echo 删除任务失败，您可以手动在任务计划程序中删除
-        )
-        echo.
-    )
+    echo.
 )
 
-REM 检查可执行文件是否存在
-if not exist "target\release\project.exe" (
-    if not exist "target\debug\project.exe" (
+REM 启动程序
+if not exist "target\debug\project.exe" (
+    if not exist "target\release\project.exe" (
         echo 错误：找不到可执行文件！
-        echo 请先运行 "cargo build --release" 编译项目
+        echo 请先运行 "cargo build" 编译项目
         pause
         exit /b 1
     ) else (
-        echo 使用 Debug 版本运行...
-        target\debug\project.exe
+        cmd /k "target\release\project.exe"
     )
 ) else (
-    target\release\project.exe
+    target\debug\project.exe
 )
 
-REM 保持窗口打开（如果程序异常退出）
+REM 保持窗口打开
 if errorlevel 1 (
     echo.
     echo 程序异常退出，错误代码: %errorlevel%
