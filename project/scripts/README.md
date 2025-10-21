@@ -2,42 +2,82 @@
 
 本文件夹包含TodoList项目的所有脚本文件。
 
-## 运行脚本
+## 📂 脚本清单
 
-### Windows
-- `run.bat` - 开发环境启动脚本（自动选择debug/release版本）
-- `start.bat` - 生产环境启动脚本
+### 🚀 主启动脚本
 
-### Linux/macOS
-- `run.sh` - 开发环境启动脚本（自动选择debug/release版本）
-- `start.sh` - 生产环境启动脚本
+#### Windows
+- **`run.bat`** - 主启动脚本（推荐使用）
+  - 自动选择 debug/release 版本
+  - 自动管理提醒任务（根据配置创建/删除）
+  - 检测项目路径变化并自动更新任务
+- **`start.bat`** - 简化版启动脚本（仅启动程序）
 
-## 提醒功能设置脚本
+#### Linux/macOS
+- **`run.sh`** - 主启动脚本（自动选择debug/release版本）
+- **`start.sh`** - 简化版启动脚本
 
-### Windows
-- `setup_reminder_task.ps1` - Windows 任务计划程序设置脚本
+### ⏰ 提醒功能脚本（Windows）
 
-#### 使用方法：
+- **`create_task.ps1`** - 自动化任务创建脚本
+  - 由 `run.bat` 自动调用，无需手动运行
+  - 从 `config.json` 读取配置
+  - 静默创建/更新定时任务
+  
+- **`setup_reminder_task.ps1`** - 交互式任务配置工具
+  - 供用户手动运行，快速配置
+  - 提供友好的交互界面
+  - 可即时选择检查频率
+  - 支持测试运行
+
+---
+
+## 💡 使用指南
+
+### 日常使用（推荐）
+
+**只需双击 `run.bat`！** 程序会：
+1. ✅ 自动启动应用
+2. ✅ 根据配置自动创建/删除提醒任务
+3. ✅ 检测到项目路径变化时自动更新任务
+
+### 快速调整提醒频率（高级用户）
+
+如果想快速更改提醒检查频率，无需进入程序：
+
 ```powershell
-# 以管理员身份运行 PowerShell
-# 进入项目根目录
-cd E:\no_game\git\todoList\todoList\project
-
-# 先编译 release 版本
-cargo build --release
-
-# 运行设置脚本
+# 右键以 PowerShell 运行（无需管理员权限）
 powershell -ExecutionPolicy Bypass -File scripts\setup_reminder_task.ps1
 ```
 
-#### 功能：
-- 自动创建Windows任务计划
-- 可选择提醒检查频率（每小时/30分钟/15分钟/自定义）
-- 支持测试运行
+**功能：**
+- 选择提醒检查频率（每小时/30分钟/15分钟/自定义）
+- 立即测试运行
+- 删除并重新创建任务
 
-## 注意事项
+---
 
-1. 所有脚本都会自动切换到项目根目录（scripts的上级目录）
-2. 确保在使用提醒功能前已编译release版本
-3. 提醒功能需要在应用的setting模式中配置开启
+## ⚙️ 提醒功能配置
+
+### 在应用内配置（推荐）
+
+1. 运行 `run.bat` 启动程序
+2. 输入 `switch` 切换到 `reminder` 模式
+3. 输入 `reminder` 命令启用/禁用提醒功能
+4. 设置检查间隔（1-1440分钟）
+5. 重启程序即可生效
+
+### 配置文件位置
+- 配置文件：`database/config.json`
+- 提醒设置在 `reminder` 字段下
+
+---
+
+## 📋 注意事项
+
+1. **首次使用前**：确保已编译项目（`cargo build --release`）
+2. **无需管理员权限**：所有脚本都使用当前用户权限运行
+3. **自动化管理**：`run.bat` 会根据配置自动处理定时任务
+4. **跨目录移动**：项目路径改变后，首次运行会自动更新任务路径
+5. **查看任务**：按 `Win + R`，输入 `taskschd.msc` 可查看任务计划程序
 

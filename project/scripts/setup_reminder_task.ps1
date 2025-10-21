@@ -95,8 +95,7 @@ $action = New-ScheduledTaskAction `
 $trigger = New-ScheduledTaskTrigger `
     -Once `
     -At (Get-Date) `
-    -RepetitionInterval (New-TimeSpan -Minutes $intervalMinutes) `
-    -RepetitionDuration ([TimeSpan]::MaxValue)
+    -RepetitionInterval (New-TimeSpan -Minutes $intervalMinutes)
 
 # 创建任务设置
 $settings = New-ScheduledTaskSettingsSet `
@@ -148,7 +147,7 @@ Write-Host "================================================`n" -ForegroundColor
 Write-Host "💡 提示:" -ForegroundColor Yellow
 Write-Host "  • 可以在 '任务计划程序' 中查看和管理此任务" -ForegroundColor Gray
 Write-Host "  • Win + R 输入 'taskschd.msc' 打开任务计划程序" -ForegroundColor Gray
-Write-Host "  • 在应用中可以通过 'setting' 模式配置提醒功能" -ForegroundColor Gray
+Write-Host "  • 在应用中可以通过 'reminder' 模式配置提醒功能" -ForegroundColor Gray
 
 # 询问是否立即测试
 Write-Host "`n是否立即测试运行一次？(Y/N): " -ForegroundColor Yellow -NoNewline

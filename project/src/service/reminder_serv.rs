@@ -36,19 +36,19 @@ impl ReminderService {
         let now = Utc::now();
         
         for todo in uncompleted {
-            if let Some(end_time) = todo.end_time {
-                // 检查每个提醒规则
-                for rule in &reminder_config.rules {
-                    if let Some(notification) = Self::check_rule(
-                        &todo,
-                        end_time,
-                        now,
-                        rule,
-                        db,
-                    )? {
-                        notifications.push(notification.clone());
-                        Logger::log_reminder(&notification);
-                    }
+            // begin_time 总是存在的（非 Option 类型）
+            let begin_time = todo.begin_time;
+            // 检查每个提醒规则
+            for rule in &reminder_config.rules {
+                if let Some(notification) = Self::check_rule(
+                    &todo,
+                    begin_time,
+                    now,
+                    rule,
+                    db,
+                )? {
+                    notifications.push(notification.clone());
+                    Logger::log_reminder(&notification);
                 }
             }
         }
@@ -74,13 +74,13 @@ impl ReminderService {
     /// 检查单个提醒规则
     fn check_rule(
         todo: &TodoListForm,
-        end_time: chrono::DateTime<chrono::Utc>,
+        begin_time: chrono::DateTime<chrono::Utc>,
         now: chrono::DateTime<chrono::Utc>,
         rule: &ReminderRule,
         db: &Database,
     ) -> AnyResult<Option<String>> {
         let reminder_type = match rule.rule_type.as_str() {
-            "before_deadline" => {
+            "before_start" => {
                 let seconds = rule.seconds_before.unwrap_or(0);
                 if seconds == 86400 {
                     ReminderType::OneDayBefore
@@ -97,19 +97,19 @@ impl ReminderService {
         // 检查是否需要提醒
         let should_remind = match &reminder_type {
             ReminderType::OneDayBefore => {
-                let diff = end_time.signed_duration_since(now);
+                let diff = begin_time.signed_duration_since(now);
                 diff.num_seconds() > 0 
                     && diff.num_seconds() <= 86400
                     && !Self::has_been_notified(db, todo.id, &reminder_type)?
             }
             ReminderType::OneHourBefore => {
-                let diff = end_time.signed_duration_since(now);
+                let diff = begin_time.signed_duration_since(now);
                 diff.num_seconds() > 0 
                     && diff.num_seconds() <= 3600
                     && !Self::has_been_notified(db, todo.id, &reminder_type)?
             }
             ReminderType::Overdue => {
-                end_time < now 
+                begin_time < now 
                     && !Self::has_been_notified(db, todo.id, &reminder_type)?
             }
         };

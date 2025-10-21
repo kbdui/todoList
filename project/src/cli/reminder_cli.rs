@@ -63,8 +63,35 @@ fn toggle_reminder(json_config: &JsonConfig) -> AnyResult<()> {
     match choice {
         "1" => {
             let was_enabled = current_enabled;
-            update_reminder_enabled(json_config, true)?;
+            
+            // 询问检查间隔时间
+            println!();
+            println!("⏱️  请设置提醒检查间隔（分钟）:");
+            println!("  推荐值: 60 (每小时检查一次)");
+            println!("  范围: 1-1440 (最多24小时)");
+            println!();
+            print!("请输入间隔分钟数 [默认60]: ");
+            io::stdout().flush()?;
+            
+            let mut interval_input = String::new();
+            io::stdin().read_line(&mut interval_input)?;
+            let interval_str = interval_input.trim();
+            
+            let interval_minutes = if interval_str.is_empty() {
+                60  // 默认值
+            } else {
+                match interval_str.parse::<u32>() {
+                    Ok(val) if val >= 1 && val <= 1440 => val,
+                    _ => {
+                        println!("⚠️  无效的输入，使用默认值 60 分钟");
+                        60
+                    }
+                }
+            };
+            
+            update_reminder_config(json_config, true, interval_minutes)?;
             println!("✅ 提醒功能已启用");
+            println!("⏱️  检查间隔: 每 {} 分钟", interval_minutes);
             
             // 如果之前是禁用状态，现在启用了，询问是否重启
             if !was_enabled {
@@ -89,9 +116,19 @@ fn toggle_reminder(json_config: &JsonConfig) -> AnyResult<()> {
             }
         }
         "2" => {
-            update_reminder_enabled(json_config, false)?;
+            // 读取当前配置，保持间隔时间不变
+            let current_interval = match json_config.get_value("reminder") {
+                Ok(value) => {
+                    value.get("check_interval_minutes")
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(60) as u32
+                }
+                Err(_) => 60,
+            };
+            
+            update_reminder_config(json_config, false, current_interval)?;
             println!("❌ 提醒功能已禁用");
-            println!("💡 定时任务不会被删除，您可以稍后重新启用");
+            println!("💡 下次启动程序时，会自动删除定时任务");
         }
         "3" => {
             println!("操作已取消");
@@ -104,8 +141,8 @@ fn toggle_reminder(json_config: &JsonConfig) -> AnyResult<()> {
     Ok(())
 }
 
-/// 更新提醒功能状态
-fn update_reminder_enabled(json_config: &JsonConfig, enabled: bool) -> AnyResult<()> {
+/// 更新提醒功能配置
+fn update_reminder_config(json_config: &JsonConfig, enabled: bool, interval_minutes: u32) -> AnyResult<()> {
     let mut config = match json_config.get_value("reminder") {
         Ok(value) => {
             serde_json::from_value::<crate::init::db_json_content::ReminderConfig>(value)?
@@ -114,6 +151,7 @@ fn update_reminder_enabled(json_config: &JsonConfig, enabled: bool) -> AnyResult
     };
     
     config.enabled = enabled;
+    config.check_interval_minutes = interval_minutes;
     let value = serde_json::to_value(config)?;
     json_config.set_value("reminder", value)?;
     
@@ -132,6 +170,7 @@ fn show_reminder_status(json_config: &JsonConfig) -> AnyResult<()> {
     println!("\n📊 提醒功能状态");
     println!("{}", "=".repeat(60));
     println!("功能状态: {}", if config.enabled { "✅ 已启用" } else { "❌ 已禁用" });
+    println!("检查间隔: 每 {} 分钟", config.check_interval_minutes);
     println!("通知类型: {}", config.notification_type);
     println!();
     println!("提醒规则:");
@@ -167,8 +206,8 @@ fn cleanup_reminder_history(db: &Database) -> AnyResult<()> {
     io::stdin().read_line(&mut input)?;
     let days: i64 = input.trim().parse()?;
     
-    if days < 1 {
-        println!("⚠️  天数必须大于0");
+    if days < 0 {
+        println!("⚠️  天数必须大于等于0");
         return Ok(());
     }
     

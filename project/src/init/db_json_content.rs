@@ -11,6 +11,7 @@ pub struct JsonDataContent {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ReminderConfig {
     pub enabled: bool,
+    pub check_interval_minutes: u32,
     pub notification_type: String,
     pub rules: Vec<ReminderRule>,
 }
@@ -26,22 +27,23 @@ impl Default for ReminderConfig {
     fn default() -> Self {
         Self {
             enabled: true,
+            check_interval_minutes: 60,
             notification_type: "console".to_string(),
             rules: vec![
                 ReminderRule {
-                    rule_type: "before_deadline".to_string(),
+                    rule_type: "before_start".to_string(),
                     seconds_before: Some(86400),
-                    message_template: "📅 任务「{title}」(ID:{id}) 将在1天后到期".to_string(),
+                    message_template: "📅 任务「{title}」(ID:{id}) 将在1天后开始".to_string(),
                 },
                 ReminderRule {
-                    rule_type: "before_deadline".to_string(),
+                    rule_type: "before_start".to_string(),
                     seconds_before: Some(3600),
-                    message_template: "⏰ 任务「{title}」(ID:{id}) 将在1小时后到期！".to_string(),
+                    message_template: "⏰ 任务「{title}」(ID:{id}) 将在1小时后开始！".to_string(),
                 },
                 ReminderRule {
                     rule_type: "overdue".to_string(),
                     seconds_before: None,
-                    message_template: "❌ 任务「{title}」(ID:{id}) 已逾期！".to_string(),
+                    message_template: "❌ 任务「{title}」(ID:{id}) 已超过开始时间！".to_string(),
                 },
             ],
         }

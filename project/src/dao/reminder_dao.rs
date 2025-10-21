@@ -81,7 +81,7 @@ pub fn cleanup_old_history(conn: &Connection, days: i64) -> Result<usize> {
     use chrono::Duration;
     let cutoff_date = Utc::now() - Duration::days(days);
     
-    let sql = "DELETE FROM reminder_history WHERE reminder_time < ?1";
+    let sql = "DELETE FROM reminder_history WHERE reminder_time <= ?1";
     let deleted = conn.execute(sql, [cutoff_date.to_rfc3339()])?;
     
     Ok(deleted)
