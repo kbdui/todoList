@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM Todo List 启动脚本 (Windows)
 REM 此脚本确保程序从正确的目录启动
 
@@ -13,9 +14,10 @@ REM 检查提醒任务是否已设置
 powershell -Command "Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue" >nul 2>&1
 set TASK_EXISTS=%errorlevel%
 
-REM 如果任务存在，检查任务路径是否与当前路径匹配
+REM 如果任务存在，检查任务路径和间隔是否与当前配置匹配
 if %TASK_EXISTS% equ 0 (
-    powershell -Command "$task = Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue; $action = $task.Actions[0]; $scriptDir = Split-Path -Parent '%~f0'; $projectPath = Split-Path -Parent $scriptDir; $currentExePath = Join-Path $projectPath 'target\release\project.exe'; if (-Not (Test-Path $currentExePath)) { $currentExePath = Join-Path $projectPath 'target\debug\project.exe' }; if ($action.Execute -ne $currentExePath) { exit 1 } else { exit 0 }" >nul 2>&1
+    REM 检查路径是否匹配
+    powershell -Command "$task = Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue; $action = $task.Actions[0]; $scriptDir = Split-Path -Parent '%~f0'; $projectPath = Split-Path -Parent $scriptDir; $currentExePath = Join-Path $projectPath 'target\release\project.exe'; if (-Not (Test-Path $currentExePath)) { $currentExePath = Join-Path $projectPath 'target\debug\project.exe' }; if ($action.Execute -notlike '*project.exe*') { exit 1 } else { exit 0 }" >nul 2>&1
     if %errorlevel% neq 0 (
         REM 任务路径不匹配，需要重建
         echo.
@@ -25,6 +27,19 @@ if %TASK_EXISTS% equ 0 (
         set TASK_EXISTS=1
         echo 旧任务已删除，将重新创建
         echo.
+    ) else (
+        REM 路径匹配，继续检查间隔是否匹配
+        powershell -Command "$json = Get-Content 'database\config.json' -Raw -Encoding UTF8 | ConvertFrom-Json; $configInterval = $json.reminder.check_interval_minutes; $task = Get-ScheduledTask -TaskName 'TodoListReminder' -ErrorAction SilentlyContinue; $trigger = $task.Triggers[0]; $taskInterval = $trigger.Repetition.Interval; if ($taskInterval -match 'PT(\d+)M$') { $taskMinutes = [int]$matches[1] } elseif ($taskInterval -match 'PT(\d+)H$') { $taskMinutes = [int]$matches[1] * 60 } elseif ($taskInterval -match 'PT(\d+)H(\d+)M') { $taskMinutes = [int]$matches[1] * 60 + [int]$matches[2] } else { exit 0 }; if ($configInterval -ne $taskMinutes) { exit 1 } else { exit 0 }" >nul 2>&1
+        if %errorlevel% neq 0 (
+            REM 间隔不匹配，需要重建
+            echo.
+            echo 检测到检查间隔已改变，正在更新定时任务...
+            
+            powershell -Command "Unregister-ScheduledTask -TaskName 'TodoListReminder' -Confirm:$false -ErrorAction SilentlyContinue" >nul 2>&1
+            set TASK_EXISTS=1
+            echo 旧任务已删除，将重新创建
+            echo.
+        )
     )
 )
 

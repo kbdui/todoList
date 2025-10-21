@@ -15,7 +15,6 @@ use chrono::Utc;
 // pub const AVAILABLE_COMMANDS: &[CommandInfo] = &[
 //     CommandInfo { name: "list", description: "显示所有待办事项" },
 //     CommandInfo { name: "new", description: "创建新的待办事项" },
-//     CommandInfo { name: "insert", description: "添加待办事项（同new）" },
 //     CommandInfo { name: "delete", description: "删除待办事项" },
 //     CommandInfo { name: "update", description: "更新待办事项" },
 //     CommandInfo { name: "toggle", description: "切换待办事项完成状态" },
@@ -33,9 +32,6 @@ pub fn order_check(order: &str, db: &database::Database) -> AnyResult<()> {
             todo_list_serv::show_all_todos(&db)?;
         }
         "new" => {
-            todo_list_serv::create_new_todo(&db)?;
-        }
-        "insert" => {
             todo_list_serv::create_new_todo(&db)?;
         }
         "delete" => {

@@ -59,7 +59,7 @@ pub fn show_all_todos(database: &Database) -> AnyResult<()> {
     } else {
         println!("📋 所有待办事项:");
         println!("{:=<80}", "");
-        for (index, todo) in todos.iter().enumerate() {
+        for (index, todo) in todos.iter().rev().enumerate() {
             let status = if todo.completed { "✅" } else { "⬜" };
             let status_text = if todo.completed { "已完成" } else { "未完成" };
             println!("{}. {} [ID: {}] {} ({})", index + 1, status, todo.id, todo.title, status_text);

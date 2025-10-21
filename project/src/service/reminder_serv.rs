@@ -98,7 +98,7 @@ impl ReminderService {
         let should_remind = match &reminder_type {
             ReminderType::OneDayBefore => {
                 let diff = begin_time.signed_duration_since(now);
-                diff.num_seconds() > 0 
+                diff.num_seconds() > 3600 
                     && diff.num_seconds() <= 86400
                     && !Self::has_been_notified(db, todo.id, &reminder_type)?
             }

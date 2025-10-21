@@ -30,10 +30,11 @@ try {
         exit 1
     }
     
-    # 创建任务动作
+    # 创建任务动作 - 使用 PowerShell 隐藏窗口运行
+    $psCommand = "Set-Location '$projectPath'; & '$exePath' --check-reminders"
     $action = New-ScheduledTaskAction `
-        -Execute $exePath `
-        -Argument "--check-reminders" `
+        -Execute "powershell.exe" `
+        -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -NoProfile -Command `"$psCommand`"" `
         -WorkingDirectory $projectPath
     
     # 创建触发器
@@ -42,7 +43,7 @@ try {
         -At (Get-Date) `
         -RepetitionInterval (New-TimeSpan -Minutes $intervalMinutes)
     
-    # 创建任务设置
+    # 创建任务设置（隐藏运行）
     $settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
         -DontStopIfGoingOnBatteries `
@@ -50,7 +51,8 @@ try {
         -RunOnlyIfNetworkAvailable:$false `
         -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
         -RestartCount 3 `
-        -RestartInterval (New-TimeSpan -Minutes 1)
+        -RestartInterval (New-TimeSpan -Minutes 1) `
+        -Hidden
     
     # 创建任务主体
     $principal = New-ScheduledTaskPrincipal `

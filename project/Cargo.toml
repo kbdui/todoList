@@ -13,3 +13,4 @@ toml = "0.9.8"
 
 [target.'cfg(windows)'.dependencies]
 winrt-notification = "0.5"
+winapi = { version = "0.3", features = ["wincon", "winuser"] }

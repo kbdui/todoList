@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM Todo List - 生产环境启动脚本 (Windows)
 
 REM 切换到项目根目录（脚本的上级目录）

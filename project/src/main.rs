@@ -7,9 +7,31 @@ mod runner;
 
 use std::io::{self, Write};
 use std::env;
+use std::thread;
+use std::time::Duration;
 use cli::help_distribute;
 use init::{database, db_json, config_load};
 use anyhow::Result as AnyResult;
+
+/// Windows 平台：隐藏控制台窗口
+#[cfg(windows)]
+fn hide_console_window() {
+    use winapi::um::wincon::GetConsoleWindow;
+    use winapi::um::winuser::{ShowWindow, SW_HIDE};
+    
+    unsafe {
+        let window = GetConsoleWindow();
+        if !window.is_null() {
+            ShowWindow(window, SW_HIDE);
+        }
+    }
+}
+
+/// 非 Windows 平台：空实现
+#[cfg(not(windows))]
+fn hide_console_window() {
+    // 非 Windows 平台不需要隐藏控制台
+}
 
 fn main() -> AnyResult<()> {
     // 获取命令行参数
@@ -17,10 +39,14 @@ fn main() -> AnyResult<()> {
     
     // 检查是否是提醒检查模式（由系统定时任务调用）
     if args.len() > 1 && args[1] == "--check-reminders" {
+        // 后台模式：隐藏控制台窗口
+        hide_console_window();
+        // 延迟3秒确保窗口完全隐藏
+        thread::sleep(Duration::from_secs(3));
         return runner::reminder::run_check_mode();
     }
     
-    // 正常的交互式模式
+    // 正常的交互式模式（保持控制台显示）
     run_interactive_mode()
 }
 

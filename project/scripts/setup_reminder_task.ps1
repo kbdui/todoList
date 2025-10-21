@@ -85,10 +85,11 @@ switch ($choice) {
 
 Write-Host "✓ 已设置为每 $intervalMinutes 分钟执行一次" -ForegroundColor Green
 
-# 创建任务操作
+# 创建任务操作 - 使用 PowerShell 隐藏窗口运行
+$psCommand = "Set-Location '$projectPath'; & '$exePath' --check-reminders"
 $action = New-ScheduledTaskAction `
-    -Execute $exePath `
-    -Argument "--check-reminders" `
+    -Execute "powershell.exe" `
+    -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -NoProfile -Command `"$psCommand`"" `
     -WorkingDirectory $projectPath
 
 # 创建触发器（每N分钟执行一次）
@@ -97,7 +98,7 @@ $trigger = New-ScheduledTaskTrigger `
     -At (Get-Date) `
     -RepetitionInterval (New-TimeSpan -Minutes $intervalMinutes)
 
-# 创建任务设置
+# 创建任务设置（隐藏运行）
 $settings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
@@ -105,7 +106,8 @@ $settings = New-ScheduledTaskSettingsSet `
     -RunOnlyIfNetworkAvailable:$false `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
     -RestartCount 3 `
-    -RestartInterval (New-TimeSpan -Minutes 1)
+    -RestartInterval (New-TimeSpan -Minutes 1) `
+    -Hidden
 
 # 创建任务主体（当前用户权限）
 $principal = New-ScheduledTaskPrincipal `

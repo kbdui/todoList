@@ -27,8 +27,8 @@ impl Default for ReminderConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            check_interval_minutes: 60,
-            notification_type: "console".to_string(),
+            check_interval_minutes: 15,
+            notification_type: "both".to_string(),
             rules: vec![
                 ReminderRule {
                     rule_type: "before_start".to_string(),
